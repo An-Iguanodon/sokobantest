@@ -17,7 +17,6 @@ import {
   isVoid,
   getX,
   getY,
-  countBlocks,
   generateGameBoard,
 } from './utils.js'
 
@@ -116,44 +115,21 @@ class Sokoban {
     this.board[getY(playerCoords.y, direction, 1)][getX(playerCoords.x, direction, 1)] = PLAYER
   }
 
-  movePlayerAndBoxes(playerCoords, direction) {
+  movePlayerAndBox(playerCoords, direction) {
     const newPlayerY = getY(playerCoords.y, direction, 1)
     const newPlayerX = getX(playerCoords.x, direction, 1)
     const newBoxY = getY(playerCoords.y, direction, 2)
     const newBoxX = getX(playerCoords.x, direction, 2)
 
     // Don't move if the movement pushes a box into a wall
-    if (isWall(this.board[newBoxY][newBoxX])) {
+    if (isWall(this.board[newBoxY][newBoxX]) || isBlock(this.board[newBoxY][newBoxX])) {
       return
     }
-
-    // Count how many blocks are in a row
-    let blocksInARow = 0
-    if (isBlock(this.board[newBoxY][newBoxX])) {
-      blocksInARow = countBlocks(1, newBoxY, newBoxX, direction, this.board)
-      // See what the next block is
-      const nextBlock =
-        this.board[getY(newPlayerY, direction, blocksInARow)][
-          getX(newPlayerX, direction, blocksInARow)
-        ]
-      // Push all the blocks if you can
-      if (isTraversible(nextBlock)) {
-        for (let i = 0; i < blocksInARow; i++) {
-          // Add blocks
-          this.board[getY(newBoxY, direction, i)][getX(newBoxX, direction, i)] =
-            isVoid(levelOneMap[getY(newBoxY, direction, i)][getX(newBoxX, direction, i)])
-              ? SUCCESS_BLOCK
-              : BLOCK
-        }
-        this.movePlayer(playerCoords, direction)
-      }
-    } else {
       // Move box
       // If on top of void, make into a success box
       this.board[newBoxY][newBoxX] = isVoid(levelOneMap[newBoxY][newBoxX]) ? SUCCESS_BLOCK : BLOCK
       this.movePlayer(playerCoords, direction)
     }
-  }
 
   move(playerCoords, direction) {
     const { x, y, above, below, sideLeft, sideRight } = playerCoords
@@ -169,8 +145,8 @@ class Sokoban {
       this.movePlayer(playerCoords, direction)
     }
 
-    if (isBlock(adjacentCell[direction])) {
-      this.movePlayerAndBoxes(playerCoords, direction)
+    if (isBlock(adjacentCell[direction]) && !isBlock(adjacentCell[direction+1])) {
+      this.movePlayerAndBox(playerCoords, direction)
     }
   }
 }
